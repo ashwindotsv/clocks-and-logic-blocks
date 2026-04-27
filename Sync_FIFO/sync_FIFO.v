@@ -28,7 +28,7 @@ Parameters:
 - Width : Data width of each FIFO entry
 */
 
-module sync_FIFO #(parameter Depth=32, Width= 16)(
+module sync_FIFO #(parameter Depth=8, Width= 16)(
     output reg [Width-1:0]Data_Out,
     input [Width-1:0] Data_In,
     input clk,RSTn,Wen, Ren,
@@ -41,7 +41,6 @@ module sync_FIFO #(parameter Depth=32, Width= 16)(
     
     assign FULL=(w_ptr[Pointer_width] ^ r_ptr[Pointer_width])  && (w_ptr[Pointer_width-1:0] == r_ptr[Pointer_width-1:0]);
     assign EMPTY = (w_ptr== r_ptr);
-    
     always @ (posedge clk or negedge RSTn)
     begin
         if (~RSTn)
@@ -50,15 +49,18 @@ module sync_FIFO #(parameter Depth=32, Width= 16)(
             r_ptr <= 0;
             Data_Out <= 0;
         end
-        if (Ren && ~EMPTY)
-        begin 
-            Data_Out <= FIFO[r_ptr[Pointer_width-1:0]];
-            r_ptr <= r_ptr+1;
-        end
-        if (Wen && ~FULL)
-        begin 
-           FIFO[w_ptr[Pointer_width-1:0]] <= Data_In;
-           w_ptr <= w_ptr+1;
+        else 
+        begin
+            if (Ren && ~EMPTY)
+            begin 
+                Data_Out <= FIFO[r_ptr[Pointer_width-1:0]];
+                r_ptr <= r_ptr+1;
+            end
+            if (Wen && ~FULL)
+            begin 
+               FIFO[w_ptr[Pointer_width-1:0]] <= Data_In;
+               w_ptr <= w_ptr+1;
+            end
         end
     end
 endmodule
