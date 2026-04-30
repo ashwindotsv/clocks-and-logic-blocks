@@ -168,30 +168,38 @@ localparam Depth=32;
             repeat (20)
             begin
                 RAM_mailbox.get(txn);
-                if (txn.A_en && txn.We_A)
+                //collision condition
+                if (txn.A_en && txn.B_en && txn.We_A && txn.We_B && txn.Address_A == txn.Address_B)
                 begin
                     mem_model[txn.Address_A] = txn.Data_In_A;
-                    $display("PORT A WRITE PASS : Expected - %d | Data_In - %d ",mem_model[txn.Address_A],txn.Data_In_A); 
+                    $display("COLLISION - PORT A WINS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
                 end
-                else if (txn.A_en && txn.Re_A)
+                //handle port A 
+                else
                 begin
-                    if ( mem_model[txn.Address_A] == txn.Data_Out_A)
-                    begin                        
-                        $display("PORT A READ PASS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
-                    end
-                    else
-                    begin
-                        $display("PORT A READ FAIL : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
-                    end
-                end
-                else if (txn.B_en)
-                begin 
-                    if (txn.We_A && txn.We_B && txn.Address_A == txn.Address_B)
+                    if (txn.A_en && txn.We_A)
                     begin
                         mem_model[txn.Address_A] = txn.Data_In_A;
-                        $display("COLLISION - PORT A WINS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);  
+                        $display("PORT A WRITE : Data_In - %d ",txn.Data_In_A); 
                     end
-                    else if (txn.Re_B)
+                    else if (txn.A_en && txn.Re_A)
+                    begin
+                        if ( mem_model[txn.Address_A] == txn.Data_Out_A)
+                        begin                        
+                            $display("PORT A READ PASS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
+                        end
+                        else
+                        begin
+                            $display("PORT A READ FAIL : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
+                        end
+                    end
+                    //HANDLE PORT B
+                    if (txn.B_en && txn.We_B)
+                    begin 
+                        mem_model[txn.Address_B] = txn.Data_In_B;
+                        $display("PORT B WRITE : Data_In - %d ",txn.Data_In_B);
+                    end  
+                    else if (txn.B_en && txn.Re_B) 
                     begin
                         if ( mem_model[txn.Address_B] == txn.Data_Out_B)
                         begin
@@ -201,38 +209,68 @@ localparam Depth=32;
                         begin
                             $display("PORT B READ FAIL : Expected - %d | Data_Out - %d ",mem_model[txn.Address_B],txn.Data_Out_B);
                         end
-                    end
-                    else if ( txn.We_B)
-                    begin
-                    mem_model[txn.Address_B] = txn.Data_In_B;
-                    $display("PORT B WRITE PASS : Expected - %d | Data_In - %d ",mem_model[txn.Address_B],txn.Data_In_B); 
-                    end 
-                end 
+                    end                   
+                end
             end
         endtask
     endclass
      
 endpackage
 
-module Sync_Dual_port_Ram_tb();
-bit clk,RSTn;
-DP_ram_inf #(8,32) ram_if(clk, RSTn);
+import dual_port_ram::*; //import the package
 
-Sync_Dual_port_RAM #(8,32) DUT(
-                            .clk(ram_if.clk),.RSTn(ram_if.RSTn),
-                            .A_en(ram_if.A_en),.We_A(ram_if.We_A),.Re_A(ram_if.Re_A),
-                            .B_en(ram_if.B_en),.We_B(ram_if.We_B),.Re_B(ram_if.Re_B),
-                            .Data_In_A(ram_if.Data_In_A),.Data_In_B(ram_if.Data_In_B),
-                            .Address_A(ram_if.Address_A),.Address_B(ram_if.Address_B),
-                            .Data_Out_A(ram_if.Data_Out_A),.Data_Out_B(ram_if.Data_Out_B)
-                            );
-                            
-                            always #5 ram_if.clk = ~ram_if.clk;
-                            initial
-                            
-                            begin
-                                fork
-                                        
-                                join
-                            end
+module Sync_Dual_port_Ram_tb();
+
+    bit clk,RSTn; // declare the signals which arent controlled by RAM (foreign signals)
+    
+    DP_ram_inf #(8,32) ram_if(clk, RSTn); //virtual interface declaration
+    
+    Sync_Dual_port_RAM #(8,32) DUT(
+                                .clk(ram_if.clk),.RSTn(ram_if.RSTn),
+                                .A_en(ram_if.A_en),.We_A(ram_if.We_A),.Re_A(ram_if.Re_A),
+                                .B_en(ram_if.B_en),.We_B(ram_if.We_B),.Re_B(ram_if.Re_B),
+                                .Data_In_A(ram_if.Data_In_A),.Data_In_B(ram_if.Data_In_B),
+                                .Address_A(ram_if.Address_A),.Address_B(ram_if.Address_B),
+                                .Data_Out_A(ram_if.Data_Out_A),.Data_Out_B(ram_if.Data_Out_B)
+                                ); //intsantiate the DUT through interface 
+                                
+                                always #5 ram_if.clk = ~ram_if.clk; //clock generation
+                                initial
+                                begin
+                                    ram_if.clk = 0;
+                                    ram_if.RSTn = 0;
+                                    #20;
+                                    ram_if.RSTn = 1;
+                                    #1000;
+                                    $finish;
+                                end
+                                initial
+                                begin
+                                    //create handles 
+                                    static generator gen = new();
+                                    static driver dri = new();
+                                    static monitor mon = new();
+                                    static scoreboard scb = new();
+                                    static mailbox gen_dri_mail = new();
+                                    static mailbox mon_scb_mail = new();
+                                    
+                                    mon.RAM_mailbox = mon_scb_mail;
+                                    scb.RAM_mailbox = mon_scb_mail;
+                                    
+                                    dri.vir_if = ram_if;
+                                    mon.vir_if = ram_if;
+                                    
+                                    
+                                    gen.RAM_mail = gen_dri_mail;
+                                    dri.RAM_mail = gen_dri_mail;
+                                    @(posedge ram_if.RSTn);
+                                    //parallel process
+                                    fork
+                                        gen.gen_txn();
+                                        dri.dri_txn();
+                                        mon.put_txn();    
+                                        scb.get_txn();    
+                                    join
+                                    $finish;
+                                end
 endmodule
