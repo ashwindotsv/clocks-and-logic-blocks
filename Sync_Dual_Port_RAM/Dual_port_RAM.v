@@ -51,19 +51,19 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
             //anti latch 
             Data_Out_A <= Data_Out_A;
             Data_Out_B <= Data_Out_B;
-            //PORT A
-            if (A_en)
-            begin
-                if (We_A)
-                begin 
-                    mem[Address_A] <= Data_In_A;
-                    Data_Out_A <= Data_In_A;
-                end
-                else if (Re_A)
+                //PORT A
+                if (A_en)
                 begin
-                    Data_Out_A <= mem[Address_A];
-                end  
-            end     
+                    if (We_A)
+                    begin 
+                        mem[Address_A] <= Data_In_A;
+                        Data_Out_A <= Data_In_A;
+                    end
+                    else if (Re_A)
+                    begin
+                        Data_Out_A <= mem[Address_A];
+                    end  
+                end     
                 //PORT B 
                 if (B_en)
                 begin
@@ -90,37 +90,3 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
         end
      end
 endmodule
-
-
-//if (A_en && We_A)
-//            begin
-//                mem[Address_A] <= Data_In_A;
-//                Data_Out_A <= Data_In_A;
-//            end
-            
-//            if (A_en && Re_A)
-//                if (We_A)
-//                begin 
-//                    Data_Out_A <= Data_In_A;
-//                end
-//                else
-//                begin
-//                    Data_Out_A <= mem[Address_A];
-//                end
-                
-//                if (B_en && ~(A_en && We_A && Address_A == Address_B))
-//                begin
-//                    if(We_B)
-//                    begin 
-//                        Data_Out_B <= Data_In_B;
-//                    end
-//                    else if (B_en && Re_B)
-//                    begin
-//                        Data_Out_B <= mem[Address_B];
-//                    end 
-////            else
-////            begin
-////                 Data_Out_A <= Data_Out_A;
-////                 Data_Out_B <= Data_Out_B;
-////            end 
-//        end
