@@ -33,6 +33,19 @@ interface DP_ram_inf #(parameter Width=8,Depth=32 );
                                     input  A_en, We_A, Re_A, B_en, We_B, Re_B,
                                     input  Data_In_A, Data_In_B,
                                     input  Address_A, Address_B);
+                                    
+                  
+                  property reset_check; // if RSTn =0; o/p data = 0 next cycle (sync behaviour)
+                        @(posedge clk) (!RSTn) |=> (Data_Out_A == 0 && Data_Out_B == 0);
+                  endproperty
+                  assert property(reset_check) 
+                    else $display("!!! RESET ASSERTION FAILED !!!");
+                  
+                  property collision;
+                        @(posedge clk) (A_en && We_A &&  B_en && We_B && (Address_A == Address_B)) |=> ( Data_Out_B == $past(Data_Out_B));
+                  endproperty
+                  assert property (collision) 
+                    else $display("COLLISION DETECTED - PORT A WINS!!!");
     
 endinterface 
 
@@ -54,15 +67,17 @@ localparam Depth=32;
         }// to make addresses stay within valid range
         
         function void display();//display function
+            $display("\n---------------------I/P Packet--------------------\n");
             $display("[%0t] | TRANSACTION PACKET - PORT A \n  A_en = %0d | We_A = %0d | Re_A : %0d \n ", $time, A_en,We_A, Re_A);
             
-            $display("[%0t] | TRANSACTION PACKET PORT B:\n B_en = %0d | We_B = %0d | Re_B :",$time,B_en,We_B, Re_B);    
+            $display("[%0t] | TRANSACTION PACKET PORT B:\n B_en = %0d | We_B = %0d | Re_B :%0d\n",$time,B_en,We_B, Re_B);    
                 
-            $display("[%0t] | DATA_IN_A : %d | DATA_IN_B : %d\n Address of PORT A :%d| Address of PORT B :%d",$time,Data_In_A,Data_In_B,Address_A, Address_B);
+            $display("[%0t] | DATA_IN_A : %d | DATA_IN_B : %d\n Address of PORT A :%d| Address of PORT B :%d\n",$time,Data_In_A,Data_In_B,Address_A, Address_B);
+            $display("\n---------------------END OF I/P Packet--------------------\n");
         endfunction 
         
         function void show();
-            $display("[%0t] | DATA_OUT_A : %d | DATA_OUT_B : %d",$time,Data_Out_A,Data_Out_B);
+            $display("OUTPUT DATA @ [%0t] | DATA_OUT_A : %d | DATA_OUT_B : %d\n",$time,Data_Out_A,Data_Out_B);
         endfunction 
         
     endclass
@@ -145,7 +160,7 @@ localparam Depth=32;
                     txn.Address_B = vir_if.Address_B; 
                     txn.Data_In_A = vir_if.Data_In_A;
                     txn.Data_In_B = vir_if.Data_In_B;
-                    @(posedge vir_if.clk);//next posedge put to scoreboard
+                    //@(posedge vir_if.clk);//next posedge put to scoreboard
                     RAM_mailbox.put(txn);
                     txn.show();
                 end
@@ -168,10 +183,11 @@ localparam Depth=32;
             begin
                 RAM_mailbox.get(txn);
                 //collision condition
+                $display("------------[%0t] SCOREBOARD RESULT---------------", $time);
                 if (txn.A_en && txn.B_en && txn.We_A && txn.We_B && txn.Address_A == txn.Address_B)
                 begin
                     mem_model[txn.Address_A] = txn.Data_In_A;
-                    $display("COLLISION - PORT A WINS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
+                    $display("COLLISION - PORT A WINS : Expected - %d | Data_Out - %d \n",mem_model[txn.Address_A],txn.Data_Out_A);
                 end
                 //handle port A 
                 else
@@ -179,34 +195,40 @@ localparam Depth=32;
                     if (txn.A_en && txn.We_A)
                     begin
                         mem_model[txn.Address_A] = txn.Data_In_A;
-                        $display("PORT A WRITE : Data_In - %d ",txn.Data_In_A); 
+                        $display("PORT A WRITE : Addr[%0d] = %0d", txn.Address_A, txn.Data_In_A); 
                     end
                     else if (txn.A_en && txn.Re_A)
                     begin
-                        if ( mem_model[txn.Address_A] == txn.Data_Out_A)
-                        begin                        
-                            $display("PORT A READ PASS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
-                        end
-                        else
+                        if (mem_model.exists(txn.Address_A))
                         begin
-                            $display("PORT A READ FAIL : Expected - %d | Data_Out - %d ",mem_model[txn.Address_A],txn.Data_Out_A);
+                            if ( mem_model[txn.Address_A] == txn.Data_Out_A)
+                            begin                        
+                                $display("*** PASS *** PORT A READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_A, mem_model[txn.Address_A], txn.Data_Out_A);
+                            end
+                            else
+                            begin
+                               $display("!!! FAIL !!! PORT A READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_A, mem_model[txn.Address_A], txn.Data_Out_A);
+                            end
                         end
                     end
                     //HANDLE PORT B
                     if (txn.B_en && txn.We_B)
                     begin 
                         mem_model[txn.Address_B] = txn.Data_In_B;
-                        $display("PORT B WRITE : Data_In - %d ",txn.Data_In_B);
+                        $display("PORT B WRITE : Addr[%0d] = %0d", txn.Address_B, txn.Data_In_B);
                     end  
                     else if (txn.B_en && txn.Re_B) 
                     begin
-                        if ( mem_model[txn.Address_B] == txn.Data_Out_B)
+                        if (mem_model.exists(txn.Address_B))
                         begin
-                            $display("PORT B READ PASS : Expected - %d | Data_Out - %d ",mem_model[txn.Address_B],txn.Data_Out_B);
-                        end
-                        else
-                        begin
-                            $display("PORT B READ FAIL : Expected - %d | Data_Out - %d ",mem_model[txn.Address_B],txn.Data_Out_B);
+                            if ( mem_model[txn.Address_B] == txn.Data_Out_B)
+                            begin
+                                $display("*** PASS *** PORT B READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_B, mem_model[txn.Address_B], txn.Data_Out_B);
+                            end
+                            else
+                            begin
+                                $display("!!! FAIL !!! PORT B READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_B, mem_model[txn.Address_B], txn.Data_Out_B);
+                            end
                         end
                     end                   
                 end
