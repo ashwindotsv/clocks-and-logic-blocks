@@ -16,9 +16,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 //interface 
-interface DP_ram_inf #(parameter Width=8,Depth=32 )(
-                     input bit clk, RSTn
-                     );
+interface DP_ram_inf #(parameter Width=8,Depth=32 );
+                     logic clk, RSTn;
                      logic A_en, We_A, Re_A;
                      logic B_en, We_B, Re_B;
                      logic [$clog2(Depth)-1:0] Address_A, Address_B;
@@ -221,9 +220,12 @@ import dual_port_ram::*; //import the package
 
 module Sync_Dual_port_Ram_tb();
 
-    bit clk,RSTn; // declare the signals which arent controlled by RAM (foreign signals)
+    reg clk = 0;
+    reg RSTn = 0; // declare the signals which arent controlled by RAM (foreign signals)
     
-    DP_ram_inf #(8,32) ram_if(clk, RSTn); //virtual interface declaration
+    DP_ram_inf #(8,32) ram_if();//virtual interface declaration
+    assign ram_if.clk = clk;
+    assign ram_if.RSTn = RSTn;
     
     Sync_Dual_port_RAM #(8,32) DUT(
                                 .clk(ram_if.clk),.RSTn(ram_if.RSTn),
@@ -234,15 +236,12 @@ module Sync_Dual_port_Ram_tb();
                                 .Data_Out_A(ram_if.Data_Out_A),.Data_Out_B(ram_if.Data_Out_B)
                                 ); //intsantiate the DUT through interface 
                                 
-                                always #5 ram_if.clk = ~ram_if.clk; //clock generation
+                                always #5 clk = ~clk; //clock generation
                                 initial
                                 begin
-                                    ram_if.clk = 0;
-                                    ram_if.RSTn = 0;
+                                    RSTn = 0;
                                     #20;
-                                    ram_if.RSTn = 1;
-                                    #1000;
-                                    $finish;
+                                    RSTn = 1;
                                 end
                                 initial
                                 begin
