@@ -23,13 +23,16 @@
 -scoreboard recives and checks the correctness of DUT with a associative array model of Dual port RAM and displays PASS/FAIL.
 -The testbench creates objects and runs tasks in parallel.
 
-3.Covergroup: (inside monitor since it observes signals)
+3.Covergroup: 
 -Port A write only
 -Port B write only
 -Both ports write simultaneously
 -Port A read
 -Port B read
 -Both ports active simultaneously
+-Only port A enabled
+-Only port B enabled
+-Both ports enabled 
 
 4.Assertions:(inside interface)
 -If Port A writes, next cycle output must reflect that data
@@ -65,7 +68,7 @@ interface DP_ram_inf #(parameter Width=8,Depth=32 );
                     else $display("!!! RESET ASSERTION FAILED !!!");
                   
                   property collision;
-                        @(posedge clk) (A_en && We_A &&  B_en && We_B && (Address_A == Address_B)) |=> ( Data_Out_B == $past(Data_Out_B));
+                        @(posedge clk) (A_en && We_A && (Address_A == Address_B)) |=> ( Data_Out_B == $past(Data_Out_B));
                   endproperty
                   assert property (collision) 
                     else $display("COLLISION DETECTED - PORT A WINS!!!");
@@ -206,7 +209,7 @@ localparam Depth=32;
                 RAM_mailbox.get(txn);
                 //collision condition
                 $display("------------[%0t] SCOREBOARD RESULT---------------", $time);
-                if (txn.A_en && txn.B_en && txn.We_A && txn.We_B && txn.Address_A == txn.Address_B)
+                if (txn.A_en && txn.B_en && txn.We_A && txn.Address_A == txn.Address_B)
                 begin
                     mem_model[txn.Address_A] = txn.Data_In_A;
                     $display("COLLISION - PORT A WINS : Expected - %d | Data_Out - %d \n",mem_model[txn.Address_A],txn.Data_Out_A);

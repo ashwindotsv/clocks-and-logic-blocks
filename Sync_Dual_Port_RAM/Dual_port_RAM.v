@@ -9,7 +9,7 @@
 /* 
 // Description: 
 The design of a synchronous(both port updates on same clock edge), parametrised Dual port RAM with active low reset.
-In case of collision i.e A_en = 1 && B_en = 1 && We_A = 1  && We_B && Address_A == Address_B, 
+In case of collision i.e A_en = 1 && B_en = 1 && We_A = 1 && Address_A == Address_B, 
 the RAM is hardcoded to write the data from PORT A. 
 Further additons : Arbiter circuit for port detection while collision, Double Data Rate, Error correction codes. 
 */ 
@@ -45,8 +45,8 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
         else 
         begin
             //anti latch 
-            Data_Out_A <= Data_Out_A;
-            Data_Out_B <= Data_Out_B;
+            //Data_Out_A <= Data_Out_A;
+            //Data_Out_B <= Data_Out_B;
                 //PORT A
                 if (A_en)
                 begin
@@ -66,12 +66,9 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
                     //conflict between Port A and B 
                     if (A_en && We_A && Address_A == Address_B) 
                     begin
-                        if (Re_B)
-                        begin 
-                            Data_Out_B <= Data_Out_B;
+                             //Data_Out_B <= Data_Out_B;
                              // Port A gets the priority in conflict  
-                             //Port B holds the previous value   
-                        end
+                             //Port B holds the previous value
                     end
                     else if (We_B)
                     begin
