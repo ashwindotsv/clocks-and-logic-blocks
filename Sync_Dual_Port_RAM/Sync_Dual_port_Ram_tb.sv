@@ -3,16 +3,39 @@
 // Engineer: Ashwin Nayak
 // 
 // Create Date: 21.04.2026 14:24:17
-// Design Name: 
+// Design Name: Synchronous Dual port RAM
 // Module Name: Sync_Dual_port_Ram_tb
-// Project Name: Sync_Dual_port_RAM
-//
+// Project Name: Memory Interface Verification System
+/* 
 // Description: 
-// 
-// 
-// 
-// 
-// 
+1.Interface:
+-Declares the signals and modports along with assertions.
+-virtual interface is an handle/pointer to an actual interface instance. 
+-vir_if lets classes access and drive interface signals.
+-In TB module actual interface instance is created, then passed to the driver/monitor.
+
+2.Testing Environment
+-class transaction defines what a transaction packet must conation.
+-class generator creates random transactions of type txn and using mailbox the txn is sent to driver
+-class driver drives the signals to DUT through interface.
+-DUT sends the signals to monitor to observe i/p and o/p through interface.
+-Monitor observes and sends the processed txn to scorevoard through mailbox.
+-scoreboard recives and checks the correctness of DUT with a associative array model of Dual port RAM and displays PASS/FAIL.
+-The testbench creates objects and runs tasks in parallel.
+
+3.Covergroup: (inside monitor since it observes signals)
+-Port A write only
+-Port B write only
+-Both ports write simultaneously
+-Port A read
+-Port B read
+-Both ports active simultaneously
+
+4.Assertions:(inside interface)
+-If Port A writes, next cycle output must reflect that data
+-After reset, outputs must be 0
+-On collision, Port A must win
+*/ 
 //////////////////////////////////////////////////////////////////////////////////
 
 //interface 
@@ -56,15 +79,17 @@ localparam Depth=32;
 
     class transaction;
     
-        rand logic [Width-1:0] Data_In_A,Data_In_B; //i/p signals
+        rand logic [Width-1:0] Data_In_A,Data_In_B; //I/P signals
         rand bit A_en,We_A, Re_A,B_en,We_B, Re_B; // enable signals
         rand logic [$clog2(Depth)-1:0] Address_A, Address_B; //address signals 
         logic [Width-1:0] Data_Out_A, Data_Out_B;//O/P signals
         
+        localparam  N = 30;// No of transaction packets 
+        
         constraint valid_addr {
-            Address_A < Depth;
-            Address_B < Depth;
-        }// to make addresses stay within valid range
+                               Address_A < Depth;
+                               Address_B < Depth;
+                               }// to make addresses stay within valid range
         
         function void display();//display function
             $display("\n---------------------I/P Packet--------------------\n");
@@ -76,7 +101,7 @@ localparam Depth=32;
             $display("\n---------------------END OF I/P Packet--------------------\n");
         endfunction 
         
-        function void show();
+        function void show();//O/P DATA is not randomized. So its preffered not to display inside packet.
             $display("OUTPUT DATA @ [%0t] | DATA_OUT_A : %d | DATA_OUT_B : %d\n",$time,Data_Out_A,Data_Out_B);
         endfunction 
         
@@ -93,7 +118,7 @@ localparam Depth=32;
         endfunction
          
         task gen_txn(); // loop to generate random transactions and put into mailbox.
-            repeat(20)
+            repeat(txn.N)
             begin
                 txn = new(); //gen new obj everytime
                 txn.randomize();//randomize
@@ -108,13 +133,14 @@ localparam Depth=32;
     
         mailbox RAM_mail;// mailbox between generator and driver.
         transaction txn;// transaction handle
-        virtual DP_ram_inf #(8,32) vir_if;
+        virtual DP_ram_inf #(8,32) vir_if;//points to actual interface and lets driver access interface signals 
         
         task dri_txn();
-            repeat(20)
+            repeat(txn.N)
             begin
-                 RAM_mail.get(txn);
+                 RAM_mail.get(txn);// get the transactions from generator
                  @(posedge vir_if.clk);
+                 
                  vir_if.A_en = txn.A_en;
                  vir_if.B_en = txn.B_en;
                  vir_if.We_A = txn.We_A;
@@ -132,19 +158,15 @@ localparam Depth=32;
     
     class monitor;
     
-        covergroup cover_RAM;
-            
-        endgroup
         transaction txn;
         mailbox RAM_mailbox;//mailbox between monitor and scoreboard 
-        virtual DP_ram_inf #(8,32) vir_if;
-        
+        virtual DP_ram_inf #(8,32) vir_if;//points to actual interface and lets monitor access interface signals 
             function new();//constructor
                 RAM_mailbox =new();
             endfunction 
 
             task put_txn; //put to scoreboard
-                repeat(20)
+                repeat(txn.N)
                 begin
                     @(posedge vir_if.clk);//sample at posedge 
                     txn = new();
@@ -160,7 +182,7 @@ localparam Depth=32;
                     txn.Address_B = vir_if.Address_B; 
                     txn.Data_In_A = vir_if.Data_In_A;
                     txn.Data_In_B = vir_if.Data_In_B;
-                    //@(posedge vir_if.clk);//next posedge put to scoreboard
+                    @(negedge vir_if.clk);//next posedge put to scoreboard
                     RAM_mailbox.put(txn);
                     txn.show();
                 end
@@ -179,7 +201,7 @@ localparam Depth=32;
         endfunction 
         
         task get_txn;
-            repeat (20)
+            repeat (txn.N)
             begin
                 RAM_mailbox.get(txn);
                 //collision condition
@@ -199,7 +221,7 @@ localparam Depth=32;
                     end
                     else if (txn.A_en && txn.Re_A)
                     begin
-                        if (mem_model.exists(txn.Address_A))
+                        if (mem_model.exists(txn.Address_A))//check if addrss exists or not 
                         begin
                             if ( mem_model[txn.Address_A] == txn.Data_Out_A)
                             begin                        
@@ -258,13 +280,49 @@ module Sync_Dual_port_Ram_tb();
                                 .Data_Out_A(ram_if.Data_Out_A),.Data_Out_B(ram_if.Data_Out_B)
                                 ); //intsantiate the DUT through interface 
                                 
+   covergroup cover_RAM @(posedge clk);
+                                        
+        cp_we_a : coverpoint ram_if.We_A{
+                                         bins write = {1};
+                                         bins no_write = {0};
+                                         }
+        cp_we_b : coverpoint ram_if.We_B{
+                                         bins write = {1};
+                                          bins no_write = {0};
+                                          }
+        cross cp_we_a,cp_we_b;// checks all combinations of both We_A and We_B
+        
+        cp_re_a : coverpoint ram_if.Re_A{
+                                         bins read = {1};
+                                         bins no_read = {0};
+                                         }
+        cp_re_b : coverpoint ram_if.Re_B{            
+                                         bins read = {1};
+                                         bins no_read = {0};
+                                         }
+        cross cp_re_a,cp_re_b;// checks all combinations of both Re_A AND Re_B 
+                                           
+        cp_en_a : coverpoint ram_if.A_en{
+                                         bins enable = {1};
+                                         bins not_enable = {0};
+                                                                            }
+        cp_en_b : coverpoint ram_if.B_en{
+                                         bins enable = {1};
+                                         bins not_enable = {0};
+                                         }
+       cross cp_en_a,cp_en_b;// checks all combinations of both A_en and B_en
+                                                                                 
+   endgroup
+   
+                                cover_RAM cg = new();
+                                
                                 always #5 clk = ~clk; //clock generation
                                 initial
                                 begin
                                     RSTn = 0;
                                     #20;
                                     RSTn = 1;
-                                end
+                                end// assert active low reset 
                                 initial
                                 begin
                                     //create handles 
@@ -274,18 +332,18 @@ module Sync_Dual_port_Ram_tb();
                                     static scoreboard scb = new();
                                     static mailbox gen_dri_mail = new();
                                     static mailbox mon_scb_mail = new();
-                                    
+                                   
                                     mon.RAM_mailbox = mon_scb_mail;
                                     scb.RAM_mailbox = mon_scb_mail;
                                     
-                                    dri.vir_if = ram_if;
-                                    mon.vir_if = ram_if;
+                                    dri.vir_if = ram_if; // connect virtual interface
+                                    mon.vir_if = ram_if; // connect virtual interface
                                     
                                     
                                     gen.RAM_mail = gen_dri_mail;
                                     dri.RAM_mail = gen_dri_mail;
                                     @(posedge ram_if.RSTn);
-                                    //parallel process
+                                    //tasks run in parallel.
                                     fork
                                         gen.gen_txn();
                                         dri.dri_txn();

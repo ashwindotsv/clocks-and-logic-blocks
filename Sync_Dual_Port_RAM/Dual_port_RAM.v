@@ -1,22 +1,18 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Engineer:Ashwin Nayak
 // 
 // Create Date: 20.04.2026 10:14:56
-// Design Name: 
+// Design Name: Synchronous Dual port RAM
 // Module Name: Dual_port_RAM
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
+// Project Name: Memory Interface Verification System
+/* 
 // Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
+The design of a synchronous(both port updates on same clock edge), parametrised Dual port RAM with active low reset.
+In case of collision i.e A_en = 1 && B_en = 1 && We_A = 1  && We_B && Address_A == Address_B, 
+the RAM is hardcoded to write the data from PORT A. 
+Further additons : Arbiter circuit for port detection while collision, Double Data Rate, Error correction codes. 
+*/ 
 //////////////////////////////////////////////////////////////////////////////////
 
 

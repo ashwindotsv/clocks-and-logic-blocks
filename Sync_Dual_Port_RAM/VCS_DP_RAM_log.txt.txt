@@ -1,6 +1,6 @@
-[2026-04-30 19:40:41 UTC] vcs -full64 -licqueue '-timescale=1ns/1ns' '+vcs+flush+all' '+warn=all' '-sverilog' design.sv testbench.sv  && ./simv +vcs+lic+wait  
+[2026-05-01 08:25:27 UTC] vcs -full64 -licqueue '-timescale=1ns/1ns' '+vcs+flush+all' '+warn=all' '-sverilog' design.sv testbench.sv  && ./simv +vcs+lic+wait  
                          Chronologic VCS (TM)
-       Version X-2025.06-SP1_Full64 -- Thu Apr 30 15:40:42 2026
+       Version X-2025.06-SP1_Full64 -- Fri May  1 04:25:28 2026
 
                     Copyright (c) 1991 - 2025 Synopsys, Inc.
    This software and the associated documentation are proprietary to Synopsys,
@@ -24,20 +24,21 @@ Top Level Modules:
        Sync_Dual_port_Ram_tb
 TimeScale is 1 ns / 1 ps
 Starting vcs inline pass...
-4 modules and 0 UDP read.
+5 modules and 0 UDP read.
+recompiling package vcs_paramclassrepository
 recompiling module Sync_Dual_port_RAM
 recompiling module DP_ram_inf
 recompiling package dual_port_ram
 recompiling module Sync_Dual_port_Ram_tb
-All of 4 modules done
+All of 5 modules done
 rm -f _cuarc*.so _csrc*.so pre_vcsobj_*.so share_vcsobj_*.so
 if [ -x ../simv ]; then chmod a-x ../simv; fi
 g++  -o ../simv      -rdynamic  -Wl,-rpath='$ORIGIN'/simv.daidir -Wl,-rpath=./simv.daidir -Wl,-rpath=/apps/vcsmx/vcs/X-2025.06-SP1/linux64/lib -L/apps/vcsmx/vcs/X-2025.06-SP1/linux64/lib  -Wl,-rpath-link=./   objs/amcQw_d.o  _286_archive_1.so  SIM_l.o       rmapats_mop.o rmapats.o rmar.o rmar_nd.o  rmar_llvm_0_1.o rmar_llvm_0_0.o            -lvirsim -lerrorinf -lsnpsmalloc -lvfs      -lvcsnew -ldistsimclient -lsimprofile -luclinative /apps/vcsmx/vcs/X-2025.06-SP1/linux64/lib/vcs_tls.o   -Wl,-whole-archive  -lvcsucli    -Wl,-no-whole-archive          /apps/vcsmx/vcs/X-2025.06-SP1/linux64/lib/vcs_save_restore_new.o -ldl  -lc -lm -lpthread -ldl 
 ../simv up to date
-CPU time: .721 seconds to compile + .707 seconds to elab + .413 seconds to link
+CPU time: .800 seconds to compile + .810 seconds to elab + .439 seconds to link
 Chronologic VCS simulator copyright 1991-2025
 Contains Synopsys proprietary information.
-Compiler version X-2025.06-SP1_Full64; Runtime version X-2025.06-SP1_Full64;  Apr 30 15:40 2026
+Compiler version X-2025.06-SP1_Full64; Runtime version X-2025.06-SP1_Full64;  May  1 04:25 2026
 
 ---------------------I/P Packet--------------------
 
@@ -338,82 +339,268 @@ Compiler version X-2025.06-SP1_Full64; Runtime version X-2025.06-SP1_Full64;  Ap
 
 ---------------------END OF I/P Packet--------------------
 
-OUTPUT DATA @ [25000] | DATA_OUT_A :   0 | DATA_OUT_B :   0
 
-------------[25000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [35000] | DATA_OUT_A :   0 | DATA_OUT_B :   x
+---------------------I/P Packet--------------------
 
-------------[35000] SCOREBOARD RESULT---------------
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 1 | We_A = 1 | Re_A : 1 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 1 | We_B = 1 | Re_B :0
+
+[20000] | DATA_IN_A :  72 | DATA_IN_B :  80
+ Address of PORT A :19| Address of PORT B :21
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 1 | Re_A : 0 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 0 | We_B = 0 | Re_B :1
+
+[20000] | DATA_IN_A :  18 | DATA_IN_B : 133
+ Address of PORT A :23| Address of PORT B :24
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 0 | Re_A : 0 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 0 | We_B = 0 | Re_B :0
+
+[20000] | DATA_IN_A :  82 | DATA_IN_B : 180
+ Address of PORT A :17| Address of PORT B :15
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 1 | We_A = 1 | Re_A : 1 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 1 | We_B = 1 | Re_B :0
+
+[20000] | DATA_IN_A : 161 | DATA_IN_B :  50
+ Address of PORT A :10| Address of PORT B : 5
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 1 | Re_A : 1 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 0 | We_B = 1 | Re_B :0
+
+[20000] | DATA_IN_A : 184 | DATA_IN_B : 250
+ Address of PORT A :25| Address of PORT B :28
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 1 | Re_A : 0 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 1 | We_B = 1 | Re_B :0
+
+[20000] | DATA_IN_A : 134 | DATA_IN_B : 215
+ Address of PORT A :17| Address of PORT B :14
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 1 | We_A = 0 | Re_A : 1 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 0 | We_B = 0 | Re_B :0
+
+[20000] | DATA_IN_A : 211 | DATA_IN_B :  94
+ Address of PORT A : 4| Address of PORT B : 8
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 1 | Re_A : 0 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 0 | We_B = 0 | Re_B :0
+
+[20000] | DATA_IN_A :  64 | DATA_IN_B :  37
+ Address of PORT A :14| Address of PORT B :18
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 1 | Re_A : 1 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 1 | We_B = 1 | Re_B :1
+
+[20000] | DATA_IN_A :  73 | DATA_IN_B :   4
+ Address of PORT A : 9| Address of PORT B :30
+
+
+---------------------END OF I/P Packet--------------------
+
+
+---------------------I/P Packet--------------------
+
+[20000] | TRANSACTION PACKET - PORT A 
+  A_en = 0 | We_A = 0 | Re_A : 1 
+ 
+[20000] | TRANSACTION PACKET PORT B:
+ B_en = 0 | We_B = 1 | Re_B :0
+
+[20000] | DATA_IN_A : 194 | DATA_IN_B :  85
+ Address of PORT A :23| Address of PORT B : 7
+
+
+---------------------END OF I/P Packet--------------------
+
+OUTPUT DATA @ [30000] | DATA_OUT_A :   0 | DATA_OUT_B :   0
+
+------------[30000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [40000] | DATA_OUT_A :   0 | DATA_OUT_B :   x
+
+------------[40000] SCOREBOARD RESULT---------------
 PORT B WRITE : Addr[11] = 3
-OUTPUT DATA @ [45000] | DATA_OUT_A :   0 | DATA_OUT_B :   3
+OUTPUT DATA @ [50000] | DATA_OUT_A :   0 | DATA_OUT_B :   3
 
-------------[45000] SCOREBOARD RESULT---------------
+------------[50000] SCOREBOARD RESULT---------------
 PORT A WRITE : Addr[1] = 204
-OUTPUT DATA @ [55000] | DATA_OUT_A : 204 | DATA_OUT_B :   3
+OUTPUT DATA @ [60000] | DATA_OUT_A : 204 | DATA_OUT_B :   3
 
-------------[55000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [65000] | DATA_OUT_A : 204 | DATA_OUT_B :   3
+------------[60000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [70000] | DATA_OUT_A : 204 | DATA_OUT_B :   3
 
-------------[65000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [75000] | DATA_OUT_A : 204 | DATA_OUT_B :   3
+------------[70000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [80000] | DATA_OUT_A : 204 | DATA_OUT_B :   3
 
-------------[75000] SCOREBOARD RESULT---------------
+------------[80000] SCOREBOARD RESULT---------------
 PORT B WRITE : Addr[23] = 70
-OUTPUT DATA @ [85000] | DATA_OUT_A : 204 | DATA_OUT_B :  70
+OUTPUT DATA @ [90000] | DATA_OUT_A : 204 | DATA_OUT_B :  70
 
-------------[85000] SCOREBOARD RESULT---------------
+------------[90000] SCOREBOARD RESULT---------------
 PORT A WRITE : Addr[23] = 31
-OUTPUT DATA @ [95000] | DATA_OUT_A :  31 | DATA_OUT_B :  70
+OUTPUT DATA @ [100000] | DATA_OUT_A :  31 | DATA_OUT_B :  70
 
-------------[95000] SCOREBOARD RESULT---------------
+------------[100000] SCOREBOARD RESULT---------------
 PORT A WRITE : Addr[28] = 248
-OUTPUT DATA @ [105000] | DATA_OUT_A : 248 | DATA_OUT_B :  70
+OUTPUT DATA @ [110000] | DATA_OUT_A : 248 | DATA_OUT_B :  70
 
-------------[105000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [115000] | DATA_OUT_A : 248 | DATA_OUT_B :  70
+------------[110000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [120000] | DATA_OUT_A : 248 | DATA_OUT_B :  70
 
-------------[115000] SCOREBOARD RESULT---------------
+------------[120000] SCOREBOARD RESULT---------------
 PORT B WRITE : Addr[27] = 9
-OUTPUT DATA @ [125000] | DATA_OUT_A : 248 | DATA_OUT_B :   9
+OUTPUT DATA @ [130000] | DATA_OUT_A : 248 | DATA_OUT_B :   9
 
-------------[125000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [135000] | DATA_OUT_A : 248 | DATA_OUT_B :   9
+------------[130000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [140000] | DATA_OUT_A : 248 | DATA_OUT_B :   9
 
-------------[135000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [145000] | DATA_OUT_A : 248 | DATA_OUT_B :   9
+------------[140000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [150000] | DATA_OUT_A : 248 | DATA_OUT_B :   9
 
-------------[145000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [155000] | DATA_OUT_A :   x | DATA_OUT_B :   9
+------------[150000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [160000] | DATA_OUT_A :   x | DATA_OUT_B :   9
 
-------------[155000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [165000] | DATA_OUT_A :   x | DATA_OUT_B :   9
+------------[160000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [170000] | DATA_OUT_A :   x | DATA_OUT_B :   9
 
-------------[165000] SCOREBOARD RESULT---------------
+------------[170000] SCOREBOARD RESULT---------------
 PORT A WRITE : Addr[16] = 118
 PORT B WRITE : Addr[27] = 97
-OUTPUT DATA @ [175000] | DATA_OUT_A : 118 | DATA_OUT_B :  97
+OUTPUT DATA @ [180000] | DATA_OUT_A : 118 | DATA_OUT_B :  97
 
-------------[175000] SCOREBOARD RESULT---------------
+------------[180000] SCOREBOARD RESULT---------------
 PORT A WRITE : Addr[9] = 47
-OUTPUT DATA @ [185000] | DATA_OUT_A :  47 | DATA_OUT_B :  97
+OUTPUT DATA @ [190000] | DATA_OUT_A :  47 | DATA_OUT_B :  97
 
-------------[185000] SCOREBOARD RESULT---------------
+------------[190000] SCOREBOARD RESULT---------------
 PORT B WRITE : Addr[0] = 212
-OUTPUT DATA @ [195000] | DATA_OUT_A :  47 | DATA_OUT_B : 212
+OUTPUT DATA @ [200000] | DATA_OUT_A :  47 | DATA_OUT_B : 212
 
-------------[195000] SCOREBOARD RESULT---------------
+------------[200000] SCOREBOARD RESULT---------------
 PORT B WRITE : Addr[6] = 162
-OUTPUT DATA @ [205000] | DATA_OUT_A :  47 | DATA_OUT_B : 162
+OUTPUT DATA @ [210000] | DATA_OUT_A :  47 | DATA_OUT_B : 162
 
-------------[205000] SCOREBOARD RESULT---------------
-OUTPUT DATA @ [215000] | DATA_OUT_A :  47 | DATA_OUT_B : 162
+------------[210000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [220000] | DATA_OUT_A :  47 | DATA_OUT_B : 162
 
-------------[215000] SCOREBOARD RESULT---------------
+------------[220000] SCOREBOARD RESULT---------------
 PORT B WRITE : Addr[15] = 44
-$finish called from file "testbench.sv", line 296.
-$finish at simulation time               215000
+OUTPUT DATA @ [230000] | DATA_OUT_A :  47 | DATA_OUT_B :  44
+
+------------[230000] SCOREBOARD RESULT---------------
+PORT A WRITE : Addr[19] = 72
+PORT B WRITE : Addr[21] = 80
+OUTPUT DATA @ [240000] | DATA_OUT_A :  72 | DATA_OUT_B :  80
+
+------------[240000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [250000] | DATA_OUT_A :  72 | DATA_OUT_B :  80
+
+------------[250000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [260000] | DATA_OUT_A :  72 | DATA_OUT_B :  80
+
+------------[260000] SCOREBOARD RESULT---------------
+PORT A WRITE : Addr[10] = 161
+PORT B WRITE : Addr[5] = 50
+OUTPUT DATA @ [270000] | DATA_OUT_A : 161 | DATA_OUT_B :  50
+
+------------[270000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [280000] | DATA_OUT_A : 161 | DATA_OUT_B :  50
+
+------------[280000] SCOREBOARD RESULT---------------
+PORT B WRITE : Addr[14] = 215
+OUTPUT DATA @ [290000] | DATA_OUT_A : 161 | DATA_OUT_B : 215
+
+------------[290000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [300000] | DATA_OUT_A :   x | DATA_OUT_B : 215
+
+------------[300000] SCOREBOARD RESULT---------------
+OUTPUT DATA @ [310000] | DATA_OUT_A :   x | DATA_OUT_B : 215
+
+------------[310000] SCOREBOARD RESULT---------------
+PORT B WRITE : Addr[30] = 4
+OUTPUT DATA @ [320000] | DATA_OUT_A :   x | DATA_OUT_B :   4
+
+------------[320000] SCOREBOARD RESULT---------------
+$finish called from file "testbench.sv", line 353.
+$finish at simulation time               320000
            V C S   S i m u l a t i o n   R e p o r t 
-Time: 215000 ps
+Time: 320000 ps
 CPU Time:      0.610 seconds;       Data structure size:   0.0Mb
-Thu Apr 30 15:40:45 2026
+Fri May  1 04:25:31 2026
 Done
