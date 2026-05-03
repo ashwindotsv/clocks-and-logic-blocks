@@ -32,7 +32,7 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
     input [$clog2(Depth)-1:0] Address_B   
     );
     
-    reg [Width-1:0] mem [0:Depth-1];
+    reg [Width-1:0] mem [0:Depth-1]; //array declaration
     
     always @ (posedge clk)
     begin
@@ -44,11 +44,7 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
         end 
         else 
         begin
-            //anti latch 
-            //Data_Out_A <= Data_Out_A;
-            //Data_Out_B <= Data_Out_B;
-                //PORT A
-                if (A_en)
+                if (A_en) //PORT A
                 begin
                     if (We_A)
                     begin 
@@ -59,16 +55,13 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
                     begin
                         Data_Out_A <= mem[Address_A];
                     end  
-                end     
-                //PORT B 
-                if (B_en)
+                end
+                if (B_en)//PORT B 
                 begin
                     //conflict between Port A and B 
                     if (A_en && We_A && Address_A == Address_B) 
                     begin
-                             //Data_Out_B <= Data_Out_B;
-                             // Port A gets the priority in conflict  
-                             //Port B holds the previous value
+                             //Data_Out_B <= Data_Out_B; Port B holds the previous value
                     end
                     else if (We_B)
                     begin

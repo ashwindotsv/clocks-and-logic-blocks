@@ -308,7 +308,7 @@ module Sync_Dual_port_Ram_tb();
         cp_en_a : coverpoint ram_if.A_en{
                                          bins enable = {1};
                                          bins not_enable = {0};
-                                                                            }
+                                         }
         cp_en_b : coverpoint ram_if.B_en{
                                          bins enable = {1};
                                          bins not_enable = {0};
@@ -354,5 +354,10 @@ module Sync_Dual_port_Ram_tb();
                                         scb.get_txn();    
                                     join
                                     $finish;
+                                end
+                                initial
+                                begin
+                                    $dumpfile("dump.vcd");
+                                    $dumpvars(0, Sync_Dual_port_Ram_tb);
                                 end
 endmodule
