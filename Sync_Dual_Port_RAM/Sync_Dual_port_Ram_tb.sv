@@ -171,7 +171,7 @@ localparam Depth=32;
             task put_txn; //put to scoreboard
                 repeat(txn.N)
                 begin
-                    @(posedge vir_if.clk);//sample at posedge 
+                    @(negedge vir_if.clk);//sample and put at negedge 
                     txn = new();
                     txn.Data_Out_A = vir_if.Data_Out_A;
                     txn.Data_Out_B = vir_if.Data_Out_B;
@@ -185,7 +185,6 @@ localparam Depth=32;
                     txn.Address_B = vir_if.Address_B; 
                     txn.Data_In_A = vir_if.Data_In_A;
                     txn.Data_In_B = vir_if.Data_In_B;
-                    @(negedge vir_if.clk);//next posedge put to scoreboard
                     RAM_mailbox.put(txn);
                     txn.show();
                 end
@@ -198,6 +197,7 @@ localparam Depth=32;
         transaction txn;
         mailbox RAM_mailbox;//mailbox between monitor and scoreboard 
         logic [Width-1:0] mem_model [int];// Associative array as RAM model
+        logic [Width-1:0] exp_A,exp_B;
         
         function new();
             RAM_mailbox = new();
@@ -209,54 +209,73 @@ localparam Depth=32;
                 RAM_mailbox.get(txn);
                 //collision condition
                 $display("------------[%0t] SCOREBOARD RESULT---------------", $time);
-                if (txn.A_en && txn.B_en && txn.We_A && txn.Address_A == txn.Address_B)
+                if (txn.A_en && txn.B_en && txn.We_A && txn.We_B && txn.Address_A == txn.Address_B)
                 begin
                     mem_model[txn.Address_A] = txn.Data_In_A;
-                    $display("COLLISION - PORT A WINS : Expected - %d | Data_Out - %d \n",mem_model[txn.Address_A],txn.Data_Out_A);
+                    $display("COLLISION - PORT A WINS : Addr[%0d]", txn.Address_A);
                 end
-                //handle port A 
+                
                 else
                 begin
                     if (txn.A_en && txn.We_A)
-                    begin
-                        mem_model[txn.Address_A] = txn.Data_In_A;
-                        $display("PORT A WRITE : Addr[%0d] = %0d", txn.Address_A, txn.Data_In_A); 
-                    end
-                    else if (txn.A_en && txn.Re_A)
-                    begin
-                        if (mem_model.exists(txn.Address_A))//check if addrss exists or not 
                         begin
-                            if ( mem_model[txn.Address_A] == txn.Data_Out_A)
-                            begin                        
-                                $display("*** PASS *** PORT A READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_A, mem_model[txn.Address_A], txn.Data_Out_A);
-                            end
-                            else
-                            begin
-                               $display("!!! FAIL !!! PORT A READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_A, mem_model[txn.Address_A], txn.Data_Out_A);
-                            end
+                            mem_model[txn.Address_A] = txn.Data_In_A;
+                            $display("PORT A WRITE : Addr[%0d] = %0d", txn.Address_A, txn.Data_In_A); 
+                        end
+                    if (txn.B_en && txn.We_B)
+                        begin
+                            mem_model[txn.Address_B] = txn.Data_In_B;
+                            $display("PORT B WRITE : Addr[%0d] = %0d", txn.Address_B, txn.Data_In_B); 
                         end
                     end
-                    //HANDLE PORT B
-                    if (txn.B_en && txn.We_B)
-                    begin 
-                        mem_model[txn.Address_B] = txn.Data_In_B;
-                        $display("PORT B WRITE : Addr[%0d] = %0d", txn.Address_B, txn.Data_In_B);
-                    end  
-                    else if (txn.B_en && txn.Re_B) 
+                    if (txn.A_en && txn.Re_A) 
+                    begin
+                        if (mem_model.exists(txn.Address_A))
+                        begin
+                            exp_A = mem_model[txn.Address_A];
+                        end
+                        else 
+                        begin  
+                            exp_A = 0;
+                        end
+                    end
+                    if (txn.B_en && txn.Re_B) 
                     begin
                         if (mem_model.exists(txn.Address_B))
                         begin
-                            if ( mem_model[txn.Address_B] == txn.Data_Out_B)
-                            begin
-                                $display("*** PASS *** PORT B READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_B, mem_model[txn.Address_B], txn.Data_Out_B);
-                            end
-                            else
-                            begin
-                                $display("!!! FAIL !!! PORT B READ | Addr[%0d] | Expected: %0d | Got: %0d\n",txn.Address_B, mem_model[txn.Address_B], txn.Data_Out_B);
-                            end
+                            exp_B = mem_model[txn.Address_B];
                         end
-                    end                   
+                        else 
+                        begin  
+                            exp_B = 0;
+                        end
+                    end
+                 
+                 // Compare PORT A
+                if (txn.A_en && txn.Re_A) 
+                begin
+                    if (txn.Data_Out_A !== exp_A)
+                    begin
+                        $display("!!! FAIL !!! PORT A READ | Addr[%0d] | Expected: %0d | Got: %0d",txn.Address_A, exp_A, txn.Data_Out_A);
+                    end
+                     else
+                     begin
+                        $display("*** PASS *** PORT A READ | Addr[%0d] | Data: %0d",txn.Address_A, txn.Data_Out_A);
+                    end
                 end
+
+                // Compare PORT B
+                if (txn.B_en && txn.Re_B)
+                begin
+                    if (txn.Data_Out_B !== exp_B) 
+                    begin
+                        $display("!!! FAIL !!! PORT B READ | Addr[%0d] | Expected: %0d | Got: %0d",txn.Address_B, exp_B, txn.Data_Out_B); 
+                    end
+                    else
+                    begin
+                    $display("*** PASS *** PORT B READ | Addr[%0d] | Data: %0d",txn.Address_B, txn.Data_Out_B);
+                    end
+                end  
             end
         endtask
     endclass
