@@ -10,20 +10,17 @@
 // Description: 
 The design of a synchronous(both port updates on same clock edge), parametrised Dual port RAM with active low reset.
 In case of collision i.e A_en = 1 && B_en = 1 && We_A = 1 && Address_A == Address_B, 
-the RAM is hardcoded to write the data from PORT A. 
-Further additons : Arbiter circuit for port detection while collision, Double Data Rate, Error correction codes. 
+the Round_Robin_Arbiter assigns the priority.
+Further additons : Double Data Rate, Error correction codes. 
 */ 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-// PORT_A gets priority when write is asserted   
+//////////////////////////////////////////////////////////////////////////////////// 
 
 module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
     input clk, RSTn,
     //port A
     output reg [Width-1:0]Data_Out_A,
     input [Width-1:0]Data_In_A,
-    input A_en,We_A, Re_A, 
+    input A_en, We_A, Re_A, 
     input [$clog2(Depth)-1:0] Address_A,
     //port B
     output reg [Width-1:0]Data_Out_B,
@@ -31,9 +28,17 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
     input B_en,We_B, Re_B, 
     input [$clog2(Depth)-1:0] Address_B   
     );
-    
+    wire grant_A, grant_B;
+    wire request_A, request_B;
+    assign request_A = A_en && We_A;
+    assign request_B = B_en && We_B;
     reg [Width-1:0] mem [0:Depth-1]; //array declaration
     
+ Round_Robin_Arb arb(
+                     .grant_A(grant_A),.grant_B(grant_B),
+                     .request_A(request_A),.request_B(request_B),
+                     .clk(clk),.nRST(RSTn)
+                     );  //instantiate Round Robin Arbiter 
     always @ (posedge clk)
     begin
         //reset behaviour
@@ -43,36 +48,25 @@ module Sync_Dual_port_RAM #(parameter Width=8, Depth=32)(
             Data_Out_B <= 0;
         end 
         else 
-        begin
-                if (A_en) //PORT A
-                begin
-                    if (We_A)
+        begin                
+                    if (grant_A)
                     begin 
                         mem[Address_A] <= Data_In_A;
                         Data_Out_A <= Data_In_A;
                     end
-                    else if (Re_A)
+                    else if (A_en && Re_A)
                     begin
                         Data_Out_A <= mem[Address_A];
-                    end  
-                end
-                if (B_en)//PORT B 
-                begin
-                    //conflict between Port A and B 
-                    if (A_en && We_A && Address_A == Address_B) 
-                    begin
-                             //Data_Out_B <= Data_Out_B; Port B holds the previous value
                     end
-                    else if (We_B)
+                    if (grant_B)
                     begin
                         mem[Address_B] <= Data_In_B;
                         Data_Out_B <= Data_In_B;
                     end
-                    else if (Re_B)
+                    else if (B_en && Re_B)
                     begin                       
                         Data_Out_B <= mem[Address_B];
                     end
-                end 
         end
      end
 endmodule
