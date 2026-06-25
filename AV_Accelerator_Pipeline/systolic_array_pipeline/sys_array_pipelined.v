@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module sys_array_pipelined #(parameter kernel_size = 3)
+module conv3x3_pipelined #(parameter kernel_size = 3)
     (
         input clk, RSTn, valid,
         input [(kernel_size*kernel_size*8)-1:0] Feature_Data_In,
