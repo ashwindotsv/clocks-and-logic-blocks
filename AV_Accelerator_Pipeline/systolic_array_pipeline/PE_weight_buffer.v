@@ -1,0 +1,98 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 23.06.2026 14:19:32
+// Design Name: 
+// Module Name: processing_element
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module Processing_Element_FSM #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width = 32)
+    (
+    output reg signed [Acc_Width-1:0] PSum_Out,
+    output reg [Pixel_Width-1:0] pixel_pass,
+    output reg valid_out,
+    input signed [Weight_Width-1:0] weight_in,
+    input load_weight,
+    input [Pixel_Width-1:0] pixel_in,
+    input signed [Acc_Width-1:0] PSum_In,
+    input valid_in,
+    input clk,RSTn
+    );
+    
+    reg [Weight_Width-1:0] weight_reg;
+    reg [1:0]CS,NS;
+    localparam [1:0] IDLE = 2'b00, LOAD = 2'b01,COMPUTE = 2'b10;
+    
+    always @(posedge clk or negedge RSTn)
+    begin
+        if(~RSTn)
+        begin
+            PSum_Out <= 0;
+            CS <= IDLE;
+        end
+        else 
+        begin
+            case (CS)
+            IDLE :  begin
+                        PSum_Out <= 0;
+                        pixel_pass <= 0;
+                        valid_out <= 0;
+                    end 
+            LOAD : begin
+                       weight_reg <= weight_in; 
+                   end
+            COMPUTE : begin
+                           PSum_Out <= PSum_In + ( weight_in * $signed({1'b0,pixel_in}) );
+                           pixel_pass <= pixel_in;
+                           valid_out <= 1'b1;  
+                      end     
+            endcase 
+        end
+    end  
+    
+    always @(*)
+    begin
+        case(CS)
+        IDLE  : begin
+                    if( load_weight == 0)
+                    begin
+                        NS = IDLE;
+                    end
+                    else
+                        NS = LOAD;
+                end
+                
+        LOAD  : begin
+                    weight_reg = weight_in; 
+                    NS = COMPUTE;
+                end
+                
+        COMPUTE  : begin 
+                       if(valid_in)
+                       begin
+                            NS = COMPUTE;
+                       end
+                       else 
+                       begin
+                            NS = IDLE;     
+                       end
+                   end
+                   
+        default : NS = CS;   
+        endcase 
+    end
+endmodule

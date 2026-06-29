@@ -43,12 +43,12 @@ module systolic_array_1x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
     wire valid_02;
     
     wire [Pixel_Width-1:0] unused_pix;
-    wire signed [Weight_Width-1:0] weight_unused;
+    wire signed [Weight_Width-1:0] weight_unused1,weight_unused2,weight_unused3;
     
     processing_element #(8,8,32) DUT_PE_1
     (
         .PSum_Out(psum_01),
-        .pixel_pass(pix_01),
+        .pixel_pass(pix_01),.weight_pass(weight_unused1),
         .valid_in(valid_in_1x3),.valid_out(valid_01),
         .weight_in(weight_in0),.pixel_in(pixel_in_1x3),
         .PSum_In(PSum_In_1x3),
@@ -58,7 +58,7 @@ module systolic_array_1x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
     processing_element #(8,8,32) DUT_PE_2
     (
         .PSum_Out(psum_02),
-        .pixel_pass(pix_02),
+        .pixel_pass(pix_02),.weight_pass(weight_unused2),
         .valid_in(valid_01),.valid_out(valid_02),
         .weight_in(weight_in1),.pixel_in(pix_01),
         .PSum_In(psum_01),
@@ -68,7 +68,7 @@ module systolic_array_1x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
     processing_element #(8,8,32) DUT_PE_3
     (
         .PSum_Out(PSum_Out_1x3),
-        .pixel_pass(weight_unused),
+        .pixel_pass(unused_pix),.weight_pass(weight_unused3),
         .valid_in(valid_02),.valid_out(valid_out_1x3),
         .weight_in(weight_in2),.pixel_in(pix_02),
         .PSum_In(psum_02),
@@ -106,31 +106,30 @@ module sys_array_1x3_tb;
             );
         
         task compute_sys_array;
-            input signed [Weight_Width-1:0] weight_ip0;
-            input signed [Weight_Width-1:0] weight_ip1;
-            input signed [Weight_Width-1:0] weight_ip2;
             input [Pixel_Width-1:0] pixel_ip_1x3;
             input signed [Acc_Width-1:0] PSum_Ip_1x3;
             input valid_ip_1x3;
             
             begin
-                weight_in0 =  weight_ip0;
-                weight_in1 =  weight_ip1;
-                weight_in2 =  weight_ip2;
                 pixel_in_1x3 = pixel_ip_1x3;
                 PSum_In_1x3 = PSum_Ip_1x3;
                 valid_in_1x3 = valid_ip_1x3;
                 #10;
+                $display("-------------------------------------------------");
                 $display("Valid : %d",DUT_sys_arr_1X3.DUT_PE_1.valid_out);
                 $display("Output of PE 1 : %d",DUT_sys_arr_1X3.DUT_PE_1.PSum_Out);
-                $display("Pixel data %d was passed to next PE",DUT_sys_arr_1X3.DUT_PE_1.pixel_in);
+                $display("Pixel data %d was passed to next PE",DUT_sys_arr_1X3.DUT_PE_1.pixel_pass);
                 
                 $display("Valid : %d ",DUT_sys_arr_1X3.DUT_PE_2.valid_out);
                 $display("Output of PE 2 : %d",DUT_sys_arr_1X3.DUT_PE_2.PSum_Out);
-                $display("Pixel data %d was passed to next PE",DUT_sys_arr_1X3.DUT_PE_2.pixel_in);
+                $display("Pixel data %d was passed to next PE",DUT_sys_arr_1X3.DUT_PE_2.pixel_pass);
                 
                 $display("Valid : %d",DUT_sys_arr_1X3.DUT_PE_3.valid_out);
-                 $display("Output of PE 3 : %d",DUT_sys_arr_1X3.DUT_PE_3.PSum_Out);
+                $display("Output of PE 3 : %d",DUT_sys_arr_1X3.DUT_PE_3.PSum_Out);
+                
+                $display("Final Output = %d", PSum_Out_1x3);
+                $display("Final Valid  = %b", valid_out_1x3);
+                $display("-------------------------------------------------");
             end
         endtask
         
@@ -144,8 +143,26 @@ module sys_array_1x3_tb;
             weight_in0 = 0; weight_in1 = 0; weight_in2 = 0;
             
             #10 RSTn = 1;
-            repeat(10)
-            compute_sys_array($random,$random,$random,$random,$random,$random);
+            #10 weight_in0 = 8'd1; weight_in1 = 8'd2; weight_in2 = 8'd3;
+            #10 compute_sys_array(8'd1,8'd0,8'd1);
+            #10 compute_sys_array(8'd1,8'd0,8'd1);
+            #10 compute_sys_array(8'd1,8'd0,8'd1);
+            
+            #10 weight_in0 = 8'd1; weight_in1 = 8'd2; weight_in2 = -8'd1;
+            #10 compute_sys_array(8'd5,8'd0,8'd0);
+            #10 compute_sys_array(8'd2,8'd0,8'd0);
+            #10 compute_sys_array(8'd3,8'd0,8'd0);
+            
+            #10 weight_in0 = 8'd1; weight_in1 = 8'd2; weight_in2 = -8'd1;
+            #10 compute_sys_array(8'd5,8'd0,8'd1);
+            #10 compute_sys_array(8'd2,8'd0,8'd1);
+            #10 compute_sys_array(8'd3,8'd0,8'd1);
+            
+            #10 weight_in0 = -8'd1; weight_in1 = 8'd3; weight_in2 = -8'd1;
+            #10 compute_sys_array(8'd5,8'd2,8'd1);
+            #10 compute_sys_array(8'd2,-8'd8,8'd1);
+            #10 compute_sys_array(8'd3,-8'd3,8'd1);
+            
             $finish;
         end 
 
