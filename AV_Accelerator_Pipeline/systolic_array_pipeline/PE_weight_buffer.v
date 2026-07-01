@@ -42,6 +42,9 @@ module Processing_Element_FSM #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Wi
         if(~RSTn)
         begin
             PSum_Out <= 0;
+            weight_reg <= 0;
+            pixel_pass <= 0;
+            valid_out <= 0;
             CS <= IDLE;
         end
         else 
@@ -51,6 +54,7 @@ module Processing_Element_FSM #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Wi
                         PSum_Out <= 0;
                         pixel_pass <= 0;
                         valid_out <= 0;
+                        if ( load_weight )
                         weight_reg <= weight_in;
                     end
             COMPUTE : begin
@@ -83,8 +87,10 @@ module Processing_Element_FSM #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Wi
         COMPUTE  : begin 
                        if(valid_in) 
                             NS = COMPUTE;
+                       else if ( load_weight )
+                            NS = IDLE; 
                        else 
-                            NS = IDLE;     
+                            NS = CS;    
                    end    
                    
                    
