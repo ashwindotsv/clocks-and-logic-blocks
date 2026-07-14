@@ -30,6 +30,8 @@ def count_categories(img_root, mask_root):
     counts = {name: 0 for name in CANDIDATE_CATEGORIES}
     total_images = 0
 
+    first_mask = True   # <-- Add this
+
     for scene in os.listdir(img_root):
         img_folder = os.path.join(img_root, scene)
         mask_folder = os.path.join(mask_root, scene)
@@ -43,6 +45,13 @@ def count_categories(img_root, mask_root):
                 continue
 
             mask = np.array(Image.open(mask_path))
+
+            # Print unique labels only once
+            if first_mask:
+                print("Unique labels in first mask:")
+                print(np.unique(mask))
+                first_mask = False
+
             total_pixels = mask.size
             total_images += 1
 
