@@ -1,5 +1,6 @@
 # ============================================================
-# STAGE 1 (corrected): coarse labels from real AutoNUE level1Ids
+# STAGE 1 (multi-label): 3 road-element categories from
+# AutoNUE level1Id masks in IDD Lite
 # ============================================================
 import os
 import glob
@@ -9,26 +10,35 @@ import pandas as pd
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Real level1Id groups, from AutoNUE/public-code anue_labels.py
-DRIVABLE_IDS    = {0}        # road, parking, drivable fallback
-OBSTRUCTION_IDS = {2, 3}     # living-things (person/animal/rider) + vehicles
-IGNORE_ID       = 255        # unlabeled/void - exclude from fraction calcs
+# Final 3 categories, chosen after checking real frequency in the dataset
+LEVEL1_CATEGORIES = {
+    "vehicle_present":      3,   # car, bus, truck, motorcycle, bicycle, autorickshaw, etc.
+    "non_drivable_present": 1,   # sidewalk, rail track, non-drivable fallback
+    "living_thing_present": 2,   # person, animal, rider
+}
 
-def get_coarse_label(mask_path):
+IGNORE_ID = 255          # unlabeled/void pixels - excluded from fraction calcs
+MIN_PIXEL_FRAC = 0.02    # a category counts as "present" if it covers >2% of the image
+
+def get_multi_labels(mask_path):
     mask = np.array(Image.open(mask_path))
 
     valid_mask = mask[mask != IGNORE_ID]
     if valid_mask.size == 0:
-        return None  # entire image is void - skip it
+        return None
 
     total_valid = valid_mask.size
-    obstruction_frac = np.isin(valid_mask, list(OBSTRUCTION_IDS)).sum() / total_valid
 
-    if obstruction_frac > 0.03:
-        return 1   # congested
-    else:
-        return 0   # clear road
-    
+    vehicle_frac      = (valid_mask == LEVEL1_CATEGORIES["vehicle_present"]).sum() / total_valid
+    non_drivable_frac = (valid_mask == LEVEL1_CATEGORIES["non_drivable_present"]).sum() / total_valid
+    living_thing_frac = (valid_mask == LEVEL1_CATEGORIES["living_thing_present"]).sum() / total_valid
+
+    return {
+        "vehicle_present":      int(vehicle_frac > 0.02),       # unchanged
+        "non_drivable_present": int(non_drivable_frac > 0.01),  # lowered from 0.02
+        "living_thing_present": int(living_thing_frac > 0.02),  # unchanged
+    }
+
 def build_label_table(img_root, mask_root):
     records = []
     for scene in os.listdir(img_root):
@@ -43,10 +53,13 @@ def build_label_table(img_root, mask_root):
             if not os.path.exists(mask_path):
                 continue
 
-            label = get_coarse_label(mask_path)
-            if label is None:
+            labels = get_multi_labels(mask_path)
+            if labels is None:
                 continue
-            records.append({"img_path": img_path, "label": label})
+
+            record = {"img_path": img_path}
+            record.update(labels)   # adds vehicle_present, non_drivable_present, living_thing_present as columns
+            records.append(record)
 
     return pd.DataFrame(records)
 
@@ -59,10 +72,12 @@ val_df = build_label_table(
     "C:/Users/nayak/Desktop/MSIS_Files/IDD_CNN_inference/idd20k_lite/gtFine/val"
 )
 
-print(f"Train: {len(train_df)}  Val: {len(val_df)}")
-print(train_df["label"].value_counts())
+print(f"Train: {len(train_df)}  Val: {len(val_df)}\n")
 
-# save next to this script's parent folder (CNN_inference/), regardless of
-# where this script was launched from
+# Print how often each category is present, individually
+for col in ["vehicle_present", "non_drivable_present", "living_thing_present"]:
+    pct = 100 * train_df[col].mean()
+    print(f"{col}: {train_df[col].sum()} / {len(train_df)}  ({pct:.1f}%)")
+
 train_df.to_csv(os.path.join(SCRIPT_DIR, "..", "idd_train_labels.csv"), index=False)
 val_df.to_csv(os.path.join(SCRIPT_DIR, "..", "idd_val_labels.csv"), index=False)
