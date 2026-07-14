@@ -45,6 +45,7 @@ module processing_element #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         else if(load_weight)
             begin
                 weight_reg <= weight_in;
+                valid_out <= 1'b0;
             end
             
             else if(valid_in)
@@ -57,8 +58,6 @@ module processing_element #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
             else
             begin   
                 valid_out <= 1'b0;
-                PSum_Out   <= 0;  // Clears the accumulation line when data stops
-                pixel_pass <= 0;
             end
     end
 endmodule

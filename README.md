@@ -222,9 +222,9 @@ Development and testing are performed on multiple FPGA platforms:
 - Vitis (Learning)
 
 ### Programming
-- Python
-- OpenCV
-- Tensforflow (CNN)
+- Python (Numpy, Pandas, Tensorflow)
+- OpenCV basics
+- C programming 
 
 ### Version Control
 - Git
