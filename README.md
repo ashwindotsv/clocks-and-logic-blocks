@@ -224,7 +224,7 @@ Development and testing are performed on multiple FPGA platforms:
 ### Programming
 - Python
 - OpenCV
--Tensforflow (CNN)
+- Tensforflow (CNN)
 
 ### Version Control
 - Git
