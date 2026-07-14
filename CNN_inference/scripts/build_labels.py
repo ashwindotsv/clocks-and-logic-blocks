@@ -7,6 +7,8 @@ import numpy as np
 from PIL import Image
 import pandas as pd
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Real level1Id groups, from AutoNUE/public-code anue_labels.py
 DRIVABLE_IDS    = {0}        # road, parking, drivable fallback
 OBSTRUCTION_IDS = {2, 3}     # living-things (person/animal/rider) + vehicles
@@ -15,22 +17,18 @@ IGNORE_ID       = 255        # unlabeled/void - exclude from fraction calcs
 def get_coarse_label(mask_path):
     mask = np.array(Image.open(mask_path))
 
-    # exclude unlabeled/void pixels from the denominator
     valid_mask = mask[mask != IGNORE_ID]
     if valid_mask.size == 0:
         return None  # entire image is void - skip it
 
     total_valid = valid_mask.size
-    drivable_frac = np.isin(valid_mask, list(DRIVABLE_IDS)).sum() / total_valid
     obstruction_frac = np.isin(valid_mask, list(OBSTRUCTION_IDS)).sum() / total_valid
 
-    if obstruction_frac > 0.10:      # tune after checking real distribution
+    if obstruction_frac > 0.03:
         return 1   # congested
-    elif drivable_frac > 0.35:
-        return 0   # clear road
     else:
-        return 2   # non-drivable / other (buildings, roadside, sky-heavy, etc.)
-
+        return 0   # clear road
+    
 def build_label_table(img_root, mask_root):
     records = []
     for scene in os.listdir(img_root):
@@ -64,5 +62,7 @@ val_df = build_label_table(
 print(f"Train: {len(train_df)}  Val: {len(val_df)}")
 print(train_df["label"].value_counts())
 
-train_df.to_csv("idd_train_labels.csv", index=False)
-val_df.to_csv("idd_val_labels.csv", index=False)
+# save next to this script's parent folder (CNN_inference/), regardless of
+# where this script was launched from
+train_df.to_csv(os.path.join(SCRIPT_DIR, "..", "idd_train_labels.csv"), index=False)
+val_df.to_csv(os.path.join(SCRIPT_DIR, "..", "idd_val_labels.csv"), index=False)
