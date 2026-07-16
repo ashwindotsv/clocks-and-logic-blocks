@@ -18,10 +18,6 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
-
-//TESTBENCH
-
 module sys_array_1x3_tb;
 
     localparam Pixel_Width = 8, Weight_Width = 8, Acc_Width = 32;

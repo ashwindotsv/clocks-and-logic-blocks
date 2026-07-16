@@ -18,6 +18,7 @@ samples = train_df.sample(16)
 fig, axes = plt.subplots(4, 4, figsize=(16, 16))
 
 for ax, (_, row) in zip(axes.flatten(), samples.iterrows()):
+    
     img = Image.open(row["img_path"])
     ax.imshow(img)
 
