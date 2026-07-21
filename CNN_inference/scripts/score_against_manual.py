@@ -2,7 +2,7 @@
 Scores every method x threshold combination against your manual labels.
 
 Run this AFTER roi_comparison.py and manual_label_tool.py have both
-produced their CSVs. Produces the exact table your prof asked for:
+produced their CSVs.
 
 Method          | Label agreement | Classification accuracy
 whole_image     | ...             | ...
