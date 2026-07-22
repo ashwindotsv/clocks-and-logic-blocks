@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
+(* use_dsp = "yes" *)
 module processing_element #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width = 32)
     (
     output reg signed [Acc_Width-1:0] PSum_Out,
@@ -29,10 +29,13 @@ module processing_element #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
     input [Pixel_Width-1:0] pixel_in,
     input signed [Acc_Width-1:0] PSum_In,
     input valid_in,load_weight,
-    input clk,RSTn
+    input clk,RSTn,flush
     );
-    reg signed [Weight_Width-1:0] weight_reg; 
     
+    reg signed [Weight_Width-1:0] weight_reg; 
+    wire signed [Pixel_Width:0] pixel_ext;
+    assign pixel_ext = $signed({1'b0, pixel_in});
+   
     always @(posedge clk or negedge  RSTn)
     begin
         if(~RSTn)
@@ -42,6 +45,12 @@ module processing_element #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
             weight_reg <= 0;
             valid_out <= 0;
         end 
+        else if (flush) 
+        begin
+            valid_out  <= 1'b0;
+            pixel_pass <= {Pixel_Width{1'b0}};
+            PSum_Out   <= {Acc_Width{1'b0}};
+        end
         else if(load_weight)
             begin
                 weight_reg <= weight_in;
@@ -50,14 +59,14 @@ module processing_element #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
             
             else if(valid_in)
             begin
-                PSum_Out <= PSum_In + ( weight_reg * $signed({1'b0,pixel_in}) );
+                PSum_Out   <= PSum_In + (weight_reg * pixel_ext);
                 pixel_pass <= pixel_in;
                 valid_out <= 1'b1;
             end
-            
             else
             begin   
                 valid_out <= 1'b0;
+                pixel_pass <= {Pixel_Width{1'b0}};
             end
     end
 endmodule
