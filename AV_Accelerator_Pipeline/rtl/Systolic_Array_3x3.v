@@ -33,7 +33,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         input signed [Acc_Width-1:0] PSum_In_3x3,
         input valid_in_3x3,
         input load_weight,
-        input clk,RSTn
+        input clk,RSTn,flush
     );
     //pixel wires
     wire [Pixel_Width-1:0] pix_00_to_01, pix_01_to_02, unused_pix02;
@@ -75,7 +75,9 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_00),
         .pixel_in(pixel_in_R1),
         .PSum_In(PSum_In_3x3),
-        .clk(clk),.RSTn(RSTn)  
+        .flush(flush),
+        .clk(clk),
+        .RSTn(RSTn)  
     );
     
     processing_element #(8,8,32) DUT_PE_01
@@ -88,7 +90,8 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_01),
         .pixel_in(pix_00_to_01),
         .PSum_In(EmptyPSumIN_1),
-        .clk(clk),.RSTn(RSTn)  
+        .clk(clk),.flush(flush),
+        .RSTn(RSTn)  
     );
     
     processing_element #(8,8,32) DUT_PE_02
@@ -101,6 +104,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_02),
         .pixel_in(pix_01_to_02),
         .PSum_In(EmptyPSumIN_2),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
     
@@ -114,6 +118,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_10),
         .pixel_in(pixel_in_R2),
         .PSum_In(psum_00_to_10),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
     
@@ -127,6 +132,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_11),
         .pixel_in(pix_10_to_11),
         .PSum_In(psum_01_to_11),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
     
@@ -140,6 +146,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_12),
         .pixel_in(pix_11_to_12),
         .PSum_In(psum_02_to_12),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
     
@@ -153,6 +160,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_20),
         .pixel_in(pixel_in_R3),
         .PSum_In(psum_10_to_20),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
     
@@ -166,6 +174,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_21),
         .pixel_in(pix_20_to_21),
         .PSum_In(psum_11_to_21),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
     
@@ -179,6 +188,7 @@ module Systolic_Array_3x3 #(parameter Pixel_Width=8, Weight_Width = 8,Acc_Width 
         .weight_in(weight_in_22),
         .pixel_in(pix_21_to_22),
         .PSum_In(psum_12_to_22),
+        .flush(flush),
         .clk(clk),.RSTn(RSTn)  
     );
 endmodule

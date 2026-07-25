@@ -29,37 +29,36 @@ module Line_buffer #(parameter IMG_WIDTH = 640)
         input clk,RSTn
     );
     
-    reg [7:0] lbuf [0:IMG_WIDTH-1];
-    reg [$clog2(IMG_WIDTH)-1:0] ptr;
+    (* ram_style = "block" *) reg [7:0] lbuf [0:IMG_WIDTH-1];    
+    reg [$clog2(IMG_WIDTH)-1:0] wr_ptr;
     
     always @(posedge clk , negedge RSTn)
     begin
         if (~RSTn)
         begin 
             pixel_out <= 0;
-            ptr <= 0;
+            wr_ptr <= 0;
             buffer_full <=0;
         end 
         else 
         begin
             if(pix_valid)
             begin
-                pixel_out <= lbuf[ptr];
-                lbuf[ptr] <= pixel_in;
-                if (ptr == IMG_WIDTH-1)
+                pixel_out <= lbuf[wr_ptr];
+                lbuf[wr_ptr] <= pixel_in;
+                if (wr_ptr == IMG_WIDTH-1)
                 begin
-                    ptr <= 0;
+                    wr_ptr <= 0;
                     buffer_full <= 1;
                 end
                 else
                 begin
-                    ptr <= ptr +1;
+                    wr_ptr <= wr_ptr +1;
                     buffer_full <=0;
                 end
             end
             else 
             begin
-                 pixel_out <= pixel_out;
                  buffer_full <=0;
             end
         end 
